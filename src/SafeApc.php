@@ -73,7 +73,7 @@ class SafeApc
         if (!isset($original_value[0]) || !isset($original_value[1])) {
             throw new SafeApcNotFoundException();
         }
-        list($value, $expire) = list($original_value);
+        list($value, $expire) = $original_value;
         if ($expire > static::$cache_start_time) {
             static::delete($key);
             throw new SafeApcNotFoundException();
