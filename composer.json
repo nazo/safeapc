@@ -1,0 +1,23 @@
+{
+    "name": "nazo/safeapc",
+    "description": "APC Cache Safe Using Wrapper",
+    "keywords": ["apc"],
+    "homepage": "http://github.com/nazo/safeapc",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Takuya Sato",
+            "email": "takuya0219@gmail.com",
+            "homepage": "https://github.com/nazo"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SafeApc\\": "src/"
+        }
+    }
+}
+
