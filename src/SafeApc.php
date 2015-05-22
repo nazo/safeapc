@@ -52,7 +52,7 @@ class SafeApc
      */
     public static function set($key, $value, $expire = 0)
     {
-        if (!apc_store(static::getCacheKey($key), static::getCacheValue($value, $expire), static::$cache_internal_expire_time)) {
+        if (!\apc_store(static::getCacheKey($key), static::getCacheValue($value, $expire), static::$cache_internal_expire_time)) {
             throw new SafeApcException();
         }
     }
@@ -66,14 +66,14 @@ class SafeApc
      */
     public static function get($key)
     {
-        $original_value = apc_fetch(static::getCacheKey($key));
+        $original_value = \apc_fetch(static::getCacheKey($key));
         if (!is_array($original_value)) {
             throw new SafeApcNotFoundException();
         }
         if (!isset($original_value[0]) || !isset($original_value[1])) {
             throw new SafeApcNotFoundException();
         }
-        list($value, $expire) = list($original_value);
+        list($value, $expire) = $original_value;
         if ($expire > static::$cache_start_time) {
             static::delete($key);
             throw new SafeApcNotFoundException();
@@ -89,7 +89,23 @@ class SafeApc
      */
     public static function delete($key)
     {
-        return apc_delete(static::getCacheKey($key));
+        return \apc_delete(static::getCacheKey($key));
+    }
+
+    /**
+     * delete cache
+     *
+     * @param string $key cache key
+     */
+    public static function exists($key)
+    {
+        try {
+            static::get($key);
+        } catch(SafeApcNotFoundException $e) {
+            return false;
+        }
+
+        return true;
     }
 
     protected static function getCacheKey($key)
