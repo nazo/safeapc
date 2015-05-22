@@ -74,9 +74,11 @@ class SafeApc
             throw new SafeApcNotFoundException();
         }
         list($value, $expire) = $original_value;
-        if ($expire > static::$cache_start_time) {
-            static::delete($key);
-            throw new SafeApcNotFoundException();
+        if ($expire > 0) {
+            if ($expire > static::$cache_start_time) {
+                static::delete($key);
+                throw new SafeApcNotFoundException();
+            }
         }
 
         return unserialize($value);
@@ -115,6 +117,10 @@ class SafeApc
 
     protected static function getCacheValue($value, $expire)
     {
-        return array(serialize($value), static::$cache_start_time + (int)$expire);
+        $time = 0;
+        if ($expire > 0) {
+            $time = static::$cache_start_time + rand(0, 30) + (int)$expire;
+        }
+        return array(serialize($value), $time);
     }
 }
