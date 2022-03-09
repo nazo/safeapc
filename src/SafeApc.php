@@ -7,13 +7,20 @@ namespace SafeApc;
  */
 class SafeApc
 {
-    private static $cache_version_key = '1';
-    private static $cache_start_time = 0;
-    private static $cache_internal_expire_time = 86400;
+    private $cacheVersionKey = '1';
+    private $cacheStartTime = 0;
+    private $cacheInternalExpireTime = 86400;
 
-    public static function setCacheInternalExpireTime($time)
+    public function __construct()
     {
-        static::$cache_internal_expire_time = $time;
+        if (!extension_loaded('apcu')) {
+            throw new \RuntimeException('APCu is not loaded');
+        }
+    }
+
+    public function setCacheInternalExpireTime(int $time)
+    {
+        $this->cacheInternalExpireTime = $time;
     }
 
     /**
@@ -22,13 +29,13 @@ class SafeApc
      *
      * @param int $time request start time
      */
-    public static function setCacheStartTime($time = null)
+    public function setCacheStartTime(?int $time = null)
     {
         if ($time === null) {
             $time = time();
         }
 
-        static::$cache_start_time = $time;
+        $this->cacheStartTime = $time;
     }
 
     /**
@@ -37,23 +44,23 @@ class SafeApc
      *
      * @param string $key version key
      */
-    public static function setCacheVersionKey($key)
+    public function setCacheVersionKey(string $key): void
     {
-        static::$cache_version_key = (string)$key;
+        $this->cache_version_key = $key;
     }
 
     /**
      * set cache
      *
      * @param string $key    cache key
-     * @param mixed  $value  cache value(auto serialized)
+     * @param mixed  $value  cache value
      * @param int    $expire cache expire time
      * @throws SafeApcException
      */
-    public static function set($key, $value, $expire = 0)
+    public function set(string $key, $value, int $expire = 0): void
     {
-        if (!\apc_store(static::getCacheKey($key), static::getCacheValue($value, $expire), static::$cache_internal_expire_time)) {
-            throw new SafeApcException();
+        if (!\apcu_store($this->getCacheKey($key), $this->getCacheValue($value, $expire), $this->cacheInternalExpireTime)) {
+            throw new SafeApcException('apcu_store failed');
         }
     }
 
@@ -64,24 +71,24 @@ class SafeApc
      * @return mixed       cache value
      * @throws SafeApcNotFoundException
      */
-    public static function get($key)
+    public function get(string $key)
     {
-        $original_value = \apc_fetch(static::getCacheKey($key));
-        if (!is_array($original_value)) {
+        $originalValue = \apcu_fetch($this->getCacheKey($key));
+        if (!is_array($originalValue)) {
             throw new SafeApcNotFoundException();
         }
-        if (!isset($original_value[0]) || !isset($original_value[1])) {
+        if (!isset($originalValue[0]) || !isset($originalValue[1])) {
             throw new SafeApcNotFoundException();
         }
-        list($value, $expire) = $original_value;
+        list($value, $expire) = $originalValue;
         if ($expire > 0) {
-            if ($expire > static::$cache_start_time) {
-                static::delete($key);
+            if ($expire > $this->cacheStartTime) {
+                $this->delete($key);
                 throw new SafeApcNotFoundException();
             }
         }
 
-        return unserialize($value);
+        return $value;
     }
 
     /**
@@ -89,9 +96,9 @@ class SafeApc
      *
      * @param string $key cache key
      */
-    public static function delete($key)
+    public function delete(string $key)
     {
-        return \apc_delete(static::getCacheKey($key));
+        return \apcu_delete($this->getCacheKey($key));
     }
 
     /**
@@ -99,10 +106,10 @@ class SafeApc
      *
      * @param string $key cache key
      */
-    public static function exists($key)
+    public function exists(string $key): bool
     {
         try {
-            static::get($key);
+            $this->get($key);
         } catch(SafeApcNotFoundException $e) {
             return false;
         }
@@ -110,17 +117,17 @@ class SafeApc
         return true;
     }
 
-    protected static function getCacheKey($key)
+    protected function getCacheKey(string $key): string
     {
-        return sprintf('%s#%s', static::$cache_version_key, $key);
+        return sprintf('%s#%s', $this->cacheVersionKey, $key);
     }
 
-    protected static function getCacheValue($value, $expire)
+    protected function getCacheValue($value, int $expire): array
     {
         $time = 0;
         if ($expire > 0) {
-            $time = static::$cache_start_time + rand(0, 30) + (int)$expire;
+            $time = $this->cacheStartTime + mt_rand(0, 30) + (int)$expire;
         }
-        return array(serialize($value), $time);
+        return [$value, $time];
     }
 }

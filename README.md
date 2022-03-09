@@ -8,18 +8,19 @@ SafeApc - PHP APC Cache Safe Using Wrapper
 use SafeApc;
 
 // initialize
-SafeApc::setCacheStartTime($_SERVER['REQUEST_TIME']);
-SafeApc::setCacheVersionKey(file_get_contents('apc_version'));
+$apc = new SafeApc();
+$apc->setCacheStartTime($_SERVER['REQUEST_TIME']);
+$apc->setCacheVersionKey(file_get_contents('apc_version'));
 
 
 // set key
-SafeApc::set('cache key', $value, 100);
+$apc->set('cache key', $value, 100);
 
 // get key (throws SafeApcNotFoundException)
-SafeApc::get('cache key');
+$apc->get('cache key');
 
 // delete key
-SafeApc::delete('cache key');
+$apc->delete('cache key');
 
 ```
 

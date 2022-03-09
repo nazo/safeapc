@@ -2,7 +2,7 @@
 
 namespace SafeApc;
 
-class SafeApcNotFoundException extends RuntimeException
+class SafeApcNotFoundException extends \RuntimeException
 {
 
 }

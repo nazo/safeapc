@@ -2,7 +2,7 @@
 
 namespace SafeApc;
 
-class SafeApcException extends RuntimeException
+class SafeApcException extends \RuntimeException
 {
 
 }
